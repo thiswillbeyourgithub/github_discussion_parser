@@ -16,6 +16,8 @@ Each discussion, along with its comments and replies, is saved as a separate `.m
 *   Handles GitHub API pagination and potential errors gracefully.
 *   Uses Loguru for clear logging to both console and a run-specific log file.
 
+The script primarily uses the GitHub GraphQL API. For more details on querying discussions via GraphQL, refer to the official documentation: [Using the GraphQL API for Discussions](https://docs.github.com/en/graphql/guides/using-the-graphql-api-for-discussions).
+
 ## Prerequisites
 
 *   Python 3.8+
