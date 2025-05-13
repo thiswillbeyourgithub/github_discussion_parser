@@ -79,25 +79,46 @@ class GithubParser:
             requests.exceptions.RequestException: If the API request fails.
             ValueError: If the API response indicates an error (e.g., bad credentials, repo not found).
         """
-        contributors_url = f"{self.api_repo_url}/contributors"
-        try:
-            response = requests.get(contributors_url, headers=self.headers)
-            response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
-            return response.json()
-        except requests.exceptions.HTTPError as http_err:
-            # Provide more context for common errors
-            if response.status_code == 401:
-                raise ValueError("Bad credentials. Please check your GitHub token.") from http_err
-            elif response.status_code == 403:
-                 # Could be rate limiting or insufficient permissions
-                 error_details = response.json().get('message', 'Forbidden')
-                 raise ValueError(f"Forbidden: {error_details}. Check token permissions or rate limits.") from http_err
-            elif response.status_code == 404:
-                raise ValueError(f"Repository not found at {self.repository_url}. Check the URL and token permissions.") from http_err
-            else:
-                raise ValueError(f"HTTP error occurred: {http_err}") from http_err
-        except requests.exceptions.RequestException as req_err:
-            raise requests.exceptions.RequestException(f"An error occurred during the API request: {req_err}") from req_err
+        all_contributors = []
+        page = 1
+        per_page = 100  # Request 100 contributors per page (max allowed)
+        contributors_url_template = f"{self.api_repo_url}/contributors"
+
+        while True:
+            params = {"per_page": per_page, "page": page}
+            try:
+                response = requests.get(contributors_url_template, headers=self.headers, params=params)
+                response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
+                current_page_contributors = response.json()
+
+                if not current_page_contributors:
+                    # No more contributors on this page, so we're done.
+                    break
+                
+                all_contributors.extend(current_page_contributors)
+                
+                # If the number of contributors returned is less than per_page,
+                # it means this was the last page.
+                if len(current_page_contributors) < per_page:
+                    break
+                    
+                page += 1
+            except requests.exceptions.HTTPError as http_err:
+                # Provide more context for common errors
+                if response.status_code == 401:
+                    raise ValueError("Bad credentials. Please check your GitHub token.") from http_err
+                elif response.status_code == 403:
+                    # Could be rate limiting or insufficient permissions
+                    error_details = response.json().get('message', 'Forbidden')
+                    raise ValueError(f"Forbidden: {error_details}. Check token permissions or rate limits.") from http_err
+                elif response.status_code == 404:
+                    raise ValueError(f"Repository not found at {self.repository_url} (page {page}). Check the URL and token permissions.") from http_err
+                else:
+                    raise ValueError(f"HTTP error occurred while fetching page {page}: {http_err}") from http_err
+            except requests.exceptions.RequestException as req_err:
+                raise requests.exceptions.RequestException(f"An error occurred during the API request for page {page}: {req_err}") from req_err
+        
+        return all_contributors
 
     def get_discussions(
         self,
