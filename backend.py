@@ -68,9 +68,12 @@ class GithubParser:
             repo = repo[:-4]
         return owner, repo
 
-    def get_contributors(self) -> List[Dict[str, Any]]:
+    def get_contributors(self, anon: bool = False) -> List[Dict[str, Any]]:
         """
         Fetches the list of contributors for the repository.
+
+        Args:
+            anon: If True, include anonymous contributors in the results.
 
         Returns:
             A list of dictionaries, where each dictionary represents a contributor.
@@ -85,7 +88,10 @@ class GithubParser:
         contributors_url_template = f"{self.api_repo_url}/contributors"
 
         while True:
-            params = {"per_page": per_page, "page": page}
+            params: Dict[str, Any
+] = {"per_page": per_page, "page": page}
+            if anon:
+                params["anon"] = "true" # GitHub API expects "true" or "1" as a string
             try:
                 response = requests.get(contributors_url_template, headers=self.headers, params=params)
                 response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
