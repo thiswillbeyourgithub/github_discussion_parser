@@ -14,6 +14,8 @@ class GithubParser:
     """
     A class to interact with the GitHub API for a specific repository.
     """
+    VERSION: str = "1.0.0"
+
     def __init__(self, repository_url: str, token: Optional[str] = None):
         """
         Initializes the GithubParser.
