@@ -11,7 +11,7 @@ import html # For escaping text in XML
 from loguru import logger
 
 # Configure Loguru to remove default handlers and add custom ones
-logger.remove()
+# logger.remove()
 logger.add(sys.stderr, level="INFO") # Log INFO and above to stderr
 
 from backend import GithubParser
